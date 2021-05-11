@@ -353,7 +353,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
             else (reduced_channels_policy * observation_shape[1] * observation_shape[2])
         )
 
-        self.representation_network = torch.nn.DataParallel(
+        self.representation_network = torch.nn.parallel.DistributedDataParallel(
             RepresentationNetwork(
                 observation_shape,
                 stacked_observations,
@@ -363,7 +363,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
             )
         )
 
-        self.dynamics_network = torch.nn.DataParallel(
+        self.dynamics_network = torch.nn.parallel.DistributedDataParallel(
             DynamicsNetwork(
                 num_blocks,
                 num_channels + 1,
@@ -374,7 +374,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
             )
         )
 
-        self.prediction_network = torch.nn.DataParallel(
+        self.prediction_network = torch.nn.parallel.DistributedDataParallel(
             PredictionNetwork(
                 action_space_size,
                 num_blocks,
