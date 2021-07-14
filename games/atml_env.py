@@ -62,14 +62,9 @@ from . primitives.ensemble import MajorityVotingPrim, RandomForestMetaPrim, Rand
     AdaBoostClassifierMetaPrim, ExtraTreesClassifierMetaPrim, GradientBoostingClassifierMetaPrim, \
     XGBClassifierMetaPrim
 # import primitives
-from . primitives import data_preprocessing
-from . primitives import feature_eng_primitives
-from . primitives import feature_selection
-from . primitives import feature_preprocessing
-from . primitives import classifier_primitives
-from . primitives import regressor_primitives
-from . primitives import ensemble
-# from . metafeatures.core import engine
+from . primitives import data_preprocessing, feature_eng_primitives, feature_selection, feature_preprocessing, \
+        classifier_primitives, regressor_primitives, ensemble
+
 from . steps import Step
 from . import steps
 from . pipelines import Pipeline, Pipeline_run
@@ -86,27 +81,17 @@ import numpy as np
 import pandas as pd
 from itertools import cycle
 from random import Random
-LjRandom = Random(356)
-shRandom = Random(111)
+
 from numpy.random import RandomState
-npRandom = RandomState(234)
 import math
 from copy import deepcopy
 import logging
 logger = logging.getLogger(__name__)
 
-from .metafeatures.meta_functions.entropy import Entropy
-from .metafeatures.meta_functions.basic import Kurtosis
-from .metafeatures.meta_functions.pearson_correlation import PearsonCorrelation
-from .metafeatures.meta_functions.mutual_information import MutualInformation
-from .metafeatures.meta_functions.basic import MissingValues
-from .metafeatures.meta_functions.basic import Skew
-from .metafeatures.meta_functions.basic import Mean as MeanF
-from .metafeatures.meta_functions.spearman_correlation import SpearmanCorrelation
-from .metafeatures.post_processing_functions.basic import Mean
-from .metafeatures.post_processing_functions.basic import StandardDeviation
-from .metafeatures.post_processing_functions.basic import NonAggregated
-from .metafeatures.post_processing_functions.basic import Skew as Skew_post
+LjRandom = Random(356)
+shRandom = Random(111)
+npRandom = RandomState(234)
+
 
 # TODO: check where we can move all the code from line 98 to 255 - some global init() function like MuZeroConfig?
 
@@ -322,63 +307,6 @@ class GridEnv:
 
 #==========From deepLine====================================
 
-def generate_metafeatures(data, use_correlation=False):
-    if data['X'].empty or data['X'].shape[1] == 0:
-        return np.zeros(num_metafeatures)-99
-    x = data['X'].copy(deep=True)
-    y = data['Y'].copy()
-
-    categorical = list(x.select_dtypes(object).columns)
-    categ = list(x.dtypes == object)
-    x[categorical] = x[categorical].fillna('NaN')
-    for col in categorical:
-        x[col] = LabelEncoder().fit_transform(x[col].astype(str))
-
-    task = data['learning_job'].task
-    if task == 'Classification':
-        exclude = EXCLUDE_META_FEATURES_CLASSIFICATION
-    else:
-        exclude = EXCLUDE_META_FEATURES_REGRESSION
-
-    mf = metafeatures.calculate_all_metafeatures_with_labels(x.values, y, categ, data['learning_job'].name)
-    mf2 = metafeatures.calculate_all_metafeatures_encoded_labels(x.values, y,
-                                                                 [False] * x.shape[1], data['learning_job'].name,
-                                                                 dont_calculate=exclude)
-    for key in list(mf2.metafeature_values.keys()):
-        if mf2.metafeature_values[key].type_ != 'METAFEATURE':
-            del mf2.metafeature_values[key]
-
-    for key in list(mf.metafeature_values.keys()):
-        if mf.metafeature_values[key].type_ != 'METAFEATURE':
-            del mf.metafeature_values[key]
-
-    mfs = pd.DataFrame(np.zeros((1, len(all_metafeatures))), columns=all_metafeatures)
-    for col in mfs.columns:
-        if col in mf.metafeature_values:
-            mfs[col] = mf.metafeature_values[col].value
-        elif col in mf2.metafeature_values:
-            mfs[col] = mf2.metafeature_values[col].value
-    mfs = mfs.values[0]
-
-    x['target'] = LabelEncoder().fit_transform(y)
-    if use_correlation:
-        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=100))
-    else:
-        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=50))
-    ans = ans.fillna(0)
-    correlation_mean = ans.values.mean()
-    correlation_std = ans.values.std()
-
-    corr_mf = np.zeros(2)
-    if correlation_mean:
-        corr_mf[0] = correlation_mean
-    if correlation_std:
-        corr_mf[0] = correlation_std
-    mfs = np.concatenate((mfs, corr_mf))
-
-    assert len(mfs) == num_metafeatures
-    return mfs
-
 
 '''DeepLine observation class'''
 class Observation:
@@ -435,15 +363,11 @@ class Observation:
         # last cells that we dont need for combiner
         self.skip_cells = [[i, len(self.grid[0])-1] for i in range(self.level - 1)]
         # metafeatures as last part of the pipeline
-        self.last_output_vec = None
         self.num_estimators = 0
         self.best_pipeline = None
         self.best_score = 0
         self.cv_reward = False
         self.print_scores = False
-        # not needed this is a metalearners - to rank the pipelines - not used
-        self.meta_regressor_data = []
-        self.meta_regressor_state = []
         self.prev_output = []
         self.split_rate = 0.8
         self.random_state = 42
@@ -654,14 +578,12 @@ class Observation:
         self.grid[self.cursor[0]][self.cursor[1]] = step
         self.last_in_rows[self.cursor[0]] = step
         step_output = self.pipe_run.add_step(step)
-        self.last_output_vec = generate_metafeatures(step_output, use_correlation=True)
         self.input_to_cell_dict[step.index] = np.array(self.cursor)
 
     def get_state(self, actions_rep=True):
         lj_vector = self.learning_job.to_vector()
         steps_inputs = np.ndarray(0)
         steps_prim = np.ndarray(0)
-        steps_mf = np.ndarray(0)
         options_family = np.zeros(self.window_size)
         s = self.options_windows[self.window_index]
 
@@ -670,29 +592,24 @@ class Observation:
             if stp == 'BLANK':
                 stp_inputs = np.zeros(self.level) - 1
                 stp_prim = np.array([self.num_primitives-2])
-                stp_mf = np.zeros(num_metafeatures)
                 options_family[i] = 8
 
             elif stp == 'FINISH':
                 stp_inputs = np.zeros(self.level) - 1
                 stp_prim = np.array([self.num_primitives - 1])
-                stp_mf = np.zeros(num_metafeatures)
                 options_family[i] = 9
 
             elif stp == -1:
                 stp_inputs = np.zeros(self.level) - 1
                 stp_prim = np.array([-1])  # remember
-                stp_mf = np.zeros(num_metafeatures) - 1
                 options_family[i] = 0
             else:
                 stp_inputs = stp.vec_representation[0]
                 stp_prim = stp.vec_representation[2]
-                stp_mf = stp.vec_representation[1]
                 options_family[i] = families[stp.primitive.type]
             i += 1
             steps_inputs = np.concatenate((steps_inputs, stp_inputs))
             steps_prim = np.concatenate((steps_prim, stp_prim))
-            steps_mf = np.concatenate((steps_mf, stp_mf))
 
         self.relations = np.empty(0)
         grid_primitives_vec = np.empty(0)
@@ -726,17 +643,12 @@ class Observation:
                     cell_vec = stp.vec_representation[2]
                     grid_primitives_vec = np.concatenate((grid_primitives_vec, cell_vec))
 
-        pipeline_metadata = self.pipe_run.calculate_metadata()
 
         if actions_rep:
-            state_vec = np.concatenate((grid_primitives_vec, self.relations, np.array(self.cursor), self.last_output_vec, pipeline_metadata, lj_vector, options_family, steps_prim, steps_inputs, steps_mf))
+            state_vec = np.concatenate((grid_primitives_vec, self.relations, np.array(self.cursor), pipeline_metadata, lj_vector, options_family, steps_prim, steps_inputs))
         else:
-            state_vec = np.concatenate((grid_primitives_vec, lj_vector, np.array(self.cursor), self.relations, self.last_output_vec, pipeline_metadata))
+            state_vec = np.concatenate((grid_primitives_vec, lj_vector, np.array(self.cursor), self.relations, pipeline_metadata))
 
-        if self.cursor == [len(self.grid)-1, len(self.grid[0])-1]:
-            self.meta_regressor_state = np.concatenate((self.relations, grid_primitives_vec, self.prev_output, pipeline_metadata))
-        else:
-            self.prev_output = self.last_output_vec
 
         info = {}
         info['cells_num'] = len(self.grid[0]) * self.level  # - len(self.skip_cells)
@@ -744,13 +656,11 @@ class Observation:
         info['num_prims'] = self.num_primitives
         info['relations_size'] = len(self.relations)  # size of relations vector
         info['single_relation_size'] = int(self.level * 2)
-        info['ff_state_size'] = len(np.array(self.cursor)) + len(self.last_output_vec) + len(pipeline_metadata) +\
+        info['ff_state_size'] = len(np.array(self.cursor)) + len(pipeline_metadata) +\
                                 len(lj_vector) + len(options_family)  # rest of state vector
         info['action_prims'] = len(steps_prim)
         info['action_inputs'] = len(steps_inputs)
-        info['action_mf'] = len(steps_mf)
         info['max_inputs'] = self.level
-        info['num_mf'] = num_metafeatures
 
         return state_vec, info
 
@@ -1113,38 +1023,6 @@ class AutomlEnv(gym.Env):
             self.observation.register_state = True
             return state, self.observation.last_reward, done, {'episode': None, 'register': self.observation.register_state,
                                                                'hier_level': hlevel}
-    # not needed - it used to compare hierarchical with regular step
-    def get_actions_dict(self):
-        all_inputs = [[[-1, -1]]]
-        cells_lists = []
-        for i in range(len(self.observation.grid)):
-            curr_list = []
-            for j in range(len(self.observation.grid[0])):
-                if [i, j] in self.observation.skip_cells:
-                    continue
-                else:
-                    curr_list.append([i, j])
-            if i > 0:
-                l = cells_lists[-1:]
-                l.append(curr_list[:-1] + [[-1, -1]])
-                combs = list(itertools.product(*l))
-                combs = [list(elem) for elem in combs]
-                all_inputs += combs
-            cells_lists.append(curr_list)
-            add_ipts = [[i] for i in curr_list[:-1]]
-            all_inputs += add_ipts
-
-        cells_lists[-1].pop(-1)
-        final_comb = [list(elem) for elem in list(itertools.product(*cells_lists))]
-        all_inputs += final_comb
-        inputs_keys = [str(i) for i in all_inputs]
-        prim_keys = [prim().name for prim in self.observation.all_primitives]
-        inputs_keys.append(prim_keys)
-        keys_lst = []
-        keys_lst.append(inputs_keys)
-        keys_lst.append(prim_keys)
-        lst = [str(i) for i in [list(elem) for elem in list(itertools.product(*keys_lst))]] + ['BLANK'] + ['FINISH']
-        return {v: k for v, k in enumerate(lst)}, dict.fromkeys(lst)
 
     # TODO: to check why not in init()
     def set_env_params(self, primitives_list=None, lj_list=None, cv_reward=False, print_scores=False, level=3,
