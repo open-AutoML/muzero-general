@@ -32,7 +32,7 @@ from gym.utils import seeding
 from .atml_utils.metrics import Accuracy
 from .atml_utils.primitives.data_preprocessing import Imputer, OneHotEncoderPrim, LabelEncoderPrim, ImputerIndicatorPrim,\
     NumericDataPrim, ImputerEncoderPrim, ImputerMedian,ImputerOneHotEncoderPrim
-from gym_deepline.envs.primitives.feature_preprocessing import KBinsDiscretizerOneHotPrim, NormalizerPrim, PowerTransformerPrim,\
+from .atml_utils.envs.primitives.feature_preprocessing import KBinsDiscretizerOneHotPrim, NormalizerPrim, PowerTransformerPrim,\
     QuantileTransformerPrim, RobustScalerPrim, MaxAbsScalerPrim, MinMaxScalerPrim, KBinsDiscretizerOrdinalPrim,\
     StandardScalerPrim
 
@@ -70,17 +70,17 @@ from .atml_utils import steps
 from .atml_utils.pipelines import Pipeline, Pipeline_run
 from .atml_utils. import LearningJob
 from .atml_utils.evaluations import train_test_evaluation
-import random
-import itertools
-from sklearn.model_selection import train_test_split
 from .atml_utils.import ML_Render, rgb_render
-from sklearn.preprocessing import LabelEncoder
 from .atml_utils.equal_groups import EqualGroupsKMeans
+
 import numpy as np
 import pandas as pd
 from itertools import cycle
 from random import Random
-
+import random
+import itertools
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 from numpy.random import RandomState
 import math
 from copy import deepcopy
@@ -309,7 +309,7 @@ class GridEnv:
 
 '''DeepLine observation class'''
 class Observation:
-    def __init__(self, level=1, mode='train'):
+    def __init__(self, level=1, mode='train', seed):
         # property related to the grid depth level init = 1 - verify?
         self.level = level
         #
@@ -369,7 +369,7 @@ class Observation:
         self.print_scores = False
         self.prev_output = []
         self.split_rate = 0.8
-        self.random_state = 42
+        self.random_state = seed
         # not used - reward if it is better than baseline the reward will be higher
         self.baselines_rewards = False
         self.model = None
@@ -400,7 +400,7 @@ class Observation:
 
             # if len(l) <= n_clusters
             steps_matrix = np.array(steps_matrix)
-            clf = EqualGroupsKMeans(n_clusters=n_clusters, random_state=0)
+            clf = EqualGroupsKMeans(n_clusters=n_clusters, random_state=self.random_state)
             clf.fit(steps_matrix)
 
             for lbl in np.unique(clf.labels_):
@@ -796,9 +796,9 @@ class Observation:
 class AutomlEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, seed):
         self.mode = 'train'
-        self.observation = Observation(level=3, mode=self.mode)
+        self.observation = Observation(level=3, mode=self.mode, seed)
         self.observation.reset_observation()
         arr = self.observation.get_state()[0]
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=arr.shape, dtype=np.float32)
@@ -813,6 +813,7 @@ class AutomlEnv(gym.Env):
         self.state_info = None
         # self.model = None
         self.embedd_size = None
+        self.seed = seed
 
     # TODO: same as get_observation() - check if we want to leave the same name
     def get_state(self):
@@ -1025,13 +1026,13 @@ class AutomlEnv(gym.Env):
 
     # TODO: to check why not in init()
     def set_env_params(self, primitives_list=None, lj_list=None, cv_reward=False, print_scores=False, level=3,
-                       reset_regressor=True, split_rate=0.8, random_state=42, baselines_rewards=False,
+                       reset_regressor=True, split_rate=0.8, baselines_rewards=False,
                        heirarc_step=True, embedd_size=None, log_pipelines=False):
 
         self.heirarc_step = heirarc_step
         self.observation = Observation(level=level, mode=self.mode)
         self.observation.split_rate = split_rate
-        self.observation.random_state = random_state
+        self.observation.random_state = self.seed
         self.observation.split_rate = split_rate
         self.observation.reset_observation(primitives_list, lj_list)
         self.observation.cv_reward = cv_reward
@@ -1087,10 +1088,5 @@ class AutomlEnv(gym.Env):
             else:
                 rgb_arr = self.rendition.reset(self.observation, self.last_action)
                 return rgb_arr
-
-    # TODO: probably not needed
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
 
 
