@@ -74,7 +74,6 @@ import random
 import itertools
 from sklearn.model_selection import train_test_split
 from . import ML_Render, rgb_render
-from .metafeatures import metafeatures
 from sklearn.preprocessing import LabelEncoder
 from .equal_groups import EqualGroupsKMeans
 import numpy as np
