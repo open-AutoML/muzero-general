@@ -29,18 +29,18 @@ import os
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from .metrics import Accuracy
-from . primitives.data_preprocessing import Imputer, OneHotEncoderPrim, LabelEncoderPrim, ImputerIndicatorPrim,\
+from .atml_utils.metrics import Accuracy
+from .atml_utils.primitives.data_preprocessing import Imputer, OneHotEncoderPrim, LabelEncoderPrim, ImputerIndicatorPrim,\
     NumericDataPrim, ImputerEncoderPrim, ImputerMedian,ImputerOneHotEncoderPrim
 from gym_deepline.envs.primitives.feature_preprocessing import KBinsDiscretizerOneHotPrim, NormalizerPrim, PowerTransformerPrim,\
     QuantileTransformerPrim, RobustScalerPrim, MaxAbsScalerPrim, MinMaxScalerPrim, KBinsDiscretizerOrdinalPrim,\
     StandardScalerPrim
 
-from . primitives.feature_eng_primitives import InteractionFeaturesPrim, PolynomialFeaturesPrim, PCA_LAPACK_Prim,\
+from .atml_utils.primitives.feature_eng_primitives import InteractionFeaturesPrim, PolynomialFeaturesPrim, PCA_LAPACK_Prim,\
     PCA_ARPACK_Prim, IncrementalPCA_Prim, PCA_Randomized_Prim, KernelPCA_Prim, TruncatedSVD_Prim,\
     FastICA_Prim, RandomTreesEmbeddingPrim # , SparsePCA_Prim, NMF_Prim, LDA_Prim,
 
-from . primitives.feature_selection import VarianceThresholdPrim, UnivariateSelectChiKbestPrim, f_classifKbestPrim,\
+from .atml_utils.primitives.feature_selection import VarianceThresholdPrim, UnivariateSelectChiKbestPrim, f_classifKbestPrim,\
     mutual_info_classifKbestPrim, f_regressionKbestPrim, f_classifPercentilePrim, f_regressionPercentilePrim, \
     mutual_info_classifPercentilePrim, mutual_info_regressionKbestPrim, mutual_info_regressionPercentilePrim,\
     UnivariateSelectChiPercentilePrim, RFE_RandomForestPrim, RFE_GradientBoostingPrim, RFE_RandomForestRegPrim,\
@@ -48,7 +48,7 @@ from . primitives.feature_selection import VarianceThresholdPrim, UnivariateSele
     f_regressionFPRPrim, f_classifFPRPrim, f_classifFWEPrim,\
     f_regressionFDRPrim, f_regressionFWEPrim # mutual_info_classifFPRPrim
 
-from . primitives.classifier_primitives import RandomForestClassifierPrim, AdaBoostClassifierPrim, BaggingClassifierPrim,\
+from .atml_utils.primitives.classifier_primitives import RandomForestClassifierPrim, AdaBoostClassifierPrim, BaggingClassifierPrim,\
 BernoulliNBClassifierPrim, ComplementNBClassifierPrim, DecisionTreeClassifierPrim, ExtraTreesClassifierPrim,\
 GaussianNBClassifierPrim, GaussianProcessClassifierPrim, GradientBoostingClassifierPrim, KNeighborsClassifierPrim,\
 LinearDiscriminantAnalysisPrim, LinearSVCPrim, LogisticRegressionPrim, LogisticRegressionCVPrim, MultinomialNBPrim,\
@@ -56,26 +56,26 @@ NearestCentroidPrim,PassiveAggressiveClassifierPrim, QuadraticDiscriminantAnalys
 RidgeClassifierPrim, RidgeClassifierCVPrim, SGDClassifierPrim, SVCPrim, XGBClassifierPrim,\
 BalancedRandomForestClassifierPrim, EasyEnsembleClassifierPrim, RUSBoostClassifierPrim, LGBMClassifierPrim #  NuSVCPrim,
 
-from . primitives.regressor_primitives import ARDRegressionPrim, AdaBoostRegressorPrim, BaggingRegressorPrim
+from .atml_utils.primitives.regressor_primitives import ARDRegressionPrim, AdaBoostRegressorPrim, BaggingRegressorPrim
 
-from . primitives.ensemble import MajorityVotingPrim, RandomForestMetaPrim, RandomForestRegressorMetaPrim, \
+from .atml_utils.primitives.ensemble import MajorityVotingPrim, RandomForestMetaPrim, RandomForestRegressorMetaPrim, \
     AdaBoostClassifierMetaPrim, ExtraTreesClassifierMetaPrim, GradientBoostingClassifierMetaPrim, \
     XGBClassifierMetaPrim
 # import primitives
-from . primitives import data_preprocessing, feature_eng_primitives, feature_selection, feature_preprocessing, \
+from .atml_utils.primitives import data_preprocessing, feature_eng_primitives, feature_selection, feature_preprocessing, \
         classifier_primitives, regressor_primitives, ensemble
 
-from . steps import Step
-from . import steps
-from . pipelines import Pipeline, Pipeline_run
-from . import LearningJob
-from .  evaluations import train_test_evaluation
+from .atml_utils.steps import Step
+from .atml_utils import steps
+from .atml_utils.pipelines import Pipeline, Pipeline_run
+from .atml_utils. import LearningJob
+from .atml_utils.evaluations import train_test_evaluation
 import random
 import itertools
 from sklearn.model_selection import train_test_split
-from . import ML_Render, rgb_render
+from .atml_utils.import ML_Render, rgb_render
 from sklearn.preprocessing import LabelEncoder
-from .equal_groups import EqualGroupsKMeans
+from .atml_utils.equal_groups import EqualGroupsKMeans
 import numpy as np
 import pandas as pd
 from itertools import cycle
