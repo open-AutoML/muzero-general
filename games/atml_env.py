@@ -29,49 +29,30 @@ import os
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-from .atml_utils.metrics import Accuracy
-from .atml_utils.primitives.data_preprocessing import Imputer, OneHotEncoderPrim, LabelEncoderPrim, ImputerIndicatorPrim,\
-    NumericDataPrim, ImputerEncoderPrim, ImputerMedian,ImputerOneHotEncoderPrim
-from .atml_utils.envs.primitives.feature_preprocessing import KBinsDiscretizerOneHotPrim, NormalizerPrim, PowerTransformerPrim,\
-    QuantileTransformerPrim, RobustScalerPrim, MaxAbsScalerPrim, MinMaxScalerPrim, KBinsDiscretizerOrdinalPrim,\
-    StandardScalerPrim
+from .atml_util.metrics import Accuracy
 
-from .atml_utils.primitives.feature_eng_primitives import InteractionFeaturesPrim, PolynomialFeaturesPrim, PCA_LAPACK_Prim,\
-    PCA_ARPACK_Prim, IncrementalPCA_Prim, PCA_Randomized_Prim, KernelPCA_Prim, TruncatedSVD_Prim,\
-    FastICA_Prim, RandomTreesEmbeddingPrim # , SparsePCA_Prim, NMF_Prim, LDA_Prim,
+from .atml_util.primitives.data_preprocessing import *
+from .atml_util.primitives.feature_preprocessing import *
 
-from .atml_utils.primitives.feature_selection import VarianceThresholdPrim, UnivariateSelectChiKbestPrim, f_classifKbestPrim,\
-    mutual_info_classifKbestPrim, f_regressionKbestPrim, f_classifPercentilePrim, f_regressionPercentilePrim, \
-    mutual_info_classifPercentilePrim, mutual_info_regressionKbestPrim, mutual_info_regressionPercentilePrim,\
-    UnivariateSelectChiPercentilePrim, RFE_RandomForestPrim, RFE_GradientBoostingPrim, RFE_RandomForestRegPrim,\
-    RFE_SVRPrim, UnivariateSelectChiFDRPrim, UnivariateSelectChiFWEPrim, UnivariateSelectChiFPRPrim, f_classifFDRPrim,\
-    f_regressionFPRPrim, f_classifFPRPrim, f_classifFWEPrim,\
-    f_regressionFDRPrim, f_regressionFWEPrim # mutual_info_classifFPRPrim
+from .atml_util.primitives.feature_eng_primitives import *
 
-from .atml_utils.primitives.classifier_primitives import RandomForestClassifierPrim, AdaBoostClassifierPrim, BaggingClassifierPrim,\
-BernoulliNBClassifierPrim, ComplementNBClassifierPrim, DecisionTreeClassifierPrim, ExtraTreesClassifierPrim,\
-GaussianNBClassifierPrim, GaussianProcessClassifierPrim, GradientBoostingClassifierPrim, KNeighborsClassifierPrim,\
-LinearDiscriminantAnalysisPrim, LinearSVCPrim, LogisticRegressionPrim, LogisticRegressionCVPrim, MultinomialNBPrim,\
-NearestCentroidPrim,PassiveAggressiveClassifierPrim, QuadraticDiscriminantAnalysisPrim,\
-RidgeClassifierPrim, RidgeClassifierCVPrim, SGDClassifierPrim, SVCPrim, XGBClassifierPrim,\
-BalancedRandomForestClassifierPrim, EasyEnsembleClassifierPrim, RUSBoostClassifierPrim, LGBMClassifierPrim #  NuSVCPrim,
+from .atml_util.primitives.feature_selection import *
 
-from .atml_utils.primitives.regressor_primitives import ARDRegressionPrim, AdaBoostRegressorPrim, BaggingRegressorPrim
+from .atml_util.primitives.classifier_primitives import *
+from .atml_util.primitives.regressor_primitives import *
 
-from .atml_utils.primitives.ensemble import MajorityVotingPrim, RandomForestMetaPrim, RandomForestRegressorMetaPrim, \
-    AdaBoostClassifierMetaPrim, ExtraTreesClassifierMetaPrim, GradientBoostingClassifierMetaPrim, \
-    XGBClassifierMetaPrim
+from .atml_util.primitives.ensemble import *
 # import primitives
-from .atml_utils.primitives import data_preprocessing, feature_eng_primitives, feature_selection, feature_preprocessing, \
+from .atml_util.primitives import data_preprocessing, feature_eng_primitives, feature_selection, feature_preprocessing, \
         classifier_primitives, regressor_primitives, ensemble
 
-from .atml_utils.steps import Step
-from .atml_utils import steps
-from .atml_utils.pipelines import Pipeline, Pipeline_run
-from .atml_utils. import LearningJob
-from .atml_utils.evaluations import train_test_evaluation
-from .atml_utils.import ML_Render, rgb_render
-from .atml_utils.equal_groups import EqualGroupsKMeans
+from .atml_util.steps import Step
+from .atml_util import steps
+from .atml_util.pipelines import Pipeline, Pipeline_run
+from .atml_util import LearningJob
+from .atml_util import train_test_evaluation
+from .atml_util import ML_Render, rgb_render
+from .atml_util.equal_groups import EqualGroupsKMeans
 
 import numpy as np
 import pandas as pd
@@ -90,6 +71,178 @@ logger = logging.getLogger(__name__)
 LjRandom = Random(356)
 shRandom = Random(111)
 npRandom = RandomState(234)
+
+from .atml_util.metafeatures.meta_functions.entropy import Entropy
+from .atml_util.metafeatures.meta_functions.basic import Kurtosis
+from .atml_util.metafeatures.meta_functions.pearson_correlation import PearsonCorrelation
+from .atml_util.metafeatures.meta_functions.mutual_information import MutualInformation
+from .atml_util.metafeatures.meta_functions.basic import MissingValues
+from .atml_util.metafeatures.meta_functions.basic import Skew
+from .atml_util.metafeatures.meta_functions.basic import Mean as MeanF
+from .atml_util.metafeatures.meta_functions.spearman_correlation import SpearmanCorrelation
+from .atml_util.metafeatures.post_processing_functions.basic import Mean
+from .atml_util.metafeatures.post_processing_functions.basic import StandardDeviation
+from .atml_util.metafeatures.post_processing_functions.basic import NonAggregated
+from .atml_util.metafeatures.post_processing_functions.basic import Skew as Skew_post
+
+
+# Instantiate metafunctions and post-processing functions
+entropy = Entropy()
+kurtosis = Kurtosis()
+correlation = PearsonCorrelation()
+mutual_information = MutualInformation()
+scorrelation = SpearmanCorrelation()
+missing = MissingValues()
+skew = Skew()
+mean = MeanF()
+_mean = Mean()
+_sd = StandardDeviation()
+_nagg = NonAggregated()
+_skew = Skew_post()
+
+primtive_modules = {
+    'data preprocess': data_preprocessing,
+    'feature preprocess': feature_preprocessing,
+    'feature selection': feature_selection,
+    'feature engineering': feature_eng_primitives,
+    'Prediction': classifier_primitives,
+    'ensemble': ensemble
+}
+
+primitives = {
+    'data preprocess': [Imputer, OneHotEncoderPrim, LabelEncoderPrim, ImputerIndicatorPrim, NumericDataPrim,
+                        ImputerEncoderPrim, ImputerMedian, ImputerOneHotEncoderPrim],
+    'feature preprocess': [KBinsDiscretizerOneHotPrim, NormalizerPrim, PowerTransformerPrim,
+                           QuantileTransformerPrim, RobustScalerPrim, MaxAbsScalerPrim, MinMaxScalerPrim,
+                           KBinsDiscretizerOrdinalPrim, StandardScalerPrim],
+    'feature selection': [VarianceThresholdPrim, UnivariateSelectChiKbestPrim, f_classifKbestPrim,
+    mutual_info_classifKbestPrim, f_regressionKbestPrim, f_classifPercentilePrim, f_regressionPercentilePrim,
+    mutual_info_classifPercentilePrim, mutual_info_regressionKbestPrim, mutual_info_regressionPercentilePrim,
+    UnivariateSelectChiPercentilePrim, RFE_RandomForestPrim, RFE_GradientBoostingPrim, RFE_RandomForestRegPrim,
+    RFE_SVRPrim, UnivariateSelectChiFDRPrim, UnivariateSelectChiFWEPrim, UnivariateSelectChiFPRPrim, f_classifFDRPrim,
+    f_regressionFPRPrim, f_classifFPRPrim, f_classifFWEPrim,
+    f_regressionFDRPrim, f_regressionFWEPrim],
+    'feature engineering': [PCA_LAPACK_Prim, PCA_ARPACK_Prim, InteractionFeaturesPrim, PolynomialFeaturesPrim,
+                            IncrementalPCA_Prim, PCA_Randomized_Prim, KernelPCA_Prim,
+                            TruncatedSVD_Prim, FastICA_Prim, RandomTreesEmbeddingPrim],
+    'Prediction': [RandomForestClassifierPrim, AdaBoostClassifierPrim, BaggingClassifierPrim,
+                       BernoulliNBClassifierPrim, ComplementNBClassifierPrim, DecisionTreeClassifierPrim,
+                       ExtraTreesClassifierPrim, GaussianNBClassifierPrim, GaussianProcessClassifierPrim,
+                       GradientBoostingClassifierPrim, KNeighborsClassifierPrim, LinearDiscriminantAnalysisPrim,
+                       LinearSVCPrim, LogisticRegressionPrim, LogisticRegressionCVPrim, MultinomialNBPrim,
+                       NearestCentroidPrim, PassiveAggressiveClassifierPrim,
+                       QuadraticDiscriminantAnalysisPrim, RidgeClassifierPrim,
+                       RidgeClassifierCVPrim, SGDClassifierPrim, SVCPrim, XGBClassifierPrim,
+                       BalancedRandomForestClassifierPrim, EasyEnsembleClassifierPrim, RUSBoostClassifierPrim,
+                       LGBMClassifierPrim, ARDRegressionPrim, AdaBoostRegressorPrim, BaggingRegressorPrim],
+    'ensemble': [MajorityVotingPrim, RandomForestMetaPrim, RandomForestRegressorMetaPrim, AdaBoostClassifierMetaPrim,
+                 ExtraTreesClassifierMetaPrim, GradientBoostingClassifierMetaPrim, XGBClassifierMetaPrim]
+}
+
+families = {
+    'data preprocess': 1,
+    'feature preprocess': 2,
+    'feature selection': 3,
+    'feature engineering': 4,
+    'Classifier': 5,
+    'Regressor': 6,
+    'ensemble': 7
+}
+
+all_primitives = []
+for val in primitives.values():
+    all_primitives += val
+
+num_primitives = len(all_primitives) + 2
+
+EXCLUDE_META_FEATURES_CLASSIFICATION = {
+    'Landmark1NN',
+    'LandmarkDecisionNodeLearner',
+    'LandmarkRandomNodeLearner',
+    'LandmarkLDA',
+    'PCA'
+}
+all_metafeatures = ['ClassEntropy', 'SymbolsSum', 'SymbolsSTD', 'SymbolsMean', 'SymbolsMax', 'SymbolsMin', 'ClassProbabilitySTD', 'ClassProbabilityMean', 'ClassProbabilityMax', 'ClassProbabilityMin', 'InverseDatasetRatio', 'DatasetRatio', 'RatioNominalToNumerical', 'RatioNumericalToNominal', 'NumberOfCategoricalFeatures', 'NumberOfNumericFeatures', 'NumberOfMissingValues', 'NumberOfFeaturesWithMissingValues', 'NumberOfInstancesWithMissingValues', 'NumberOfFeatures', 'NumberOfClasses', 'NumberOfInstances', 'LogInverseDatasetRatio', 'LogDatasetRatio', 'PercentageOfMissingValues', 'PercentageOfFeaturesWithMissingValues', 'PercentageOfInstancesWithMissingValues', 'LogNumberOfFeatures', 'LogNumberOfInstances', 'PCASkewnessFirstPC', 'PCAKurtosisFirstPC', 'PCAFractionOfComponentsFor95PercentVariance', 'LandmarkRandomNodeLearner', 'LandmarkDecisionTree', 'LandmarkNaiveBayes', 'SkewnessSTD', 'SkewnessMean', 'SkewnessMax', 'SkewnessMin', 'KurtosisSTD', 'KurtosisMean', 'KurtosisMax', 'KurtosisMin']
+
+EXCLUDE_META_FEATURES_REGRESSION = {
+    'Landmark1NN',
+    'LandmarkDecisionNodeLearner',
+    'LandmarkDecisionTree',
+    'LandmarkLDA',
+    'LandmarkNaiveBayes',
+    'LandmarkRandomNodeLearner',
+    'NumberOfClasses',
+    'ClassOccurences',
+    'ClassProbabilityMin',
+    'ClassProbabilityMax',
+    'ClassProbabilityMean',
+    'ClassProbabilitySTD',
+    'ClassEntropy',
+    'LandmarkRandomNodeLearner',
+    'PCA',
+}
+
+num_metafeatures = len(all_metafeatures) + 2
+
+
+
+def generate_metafeatures(data, use_correlation=False):
+    if data['X'].empty or data['X'].shape[1] == 0:
+        return np.zeros(num_metafeatures)-99
+    x = data['X'].copy(deep=True)
+    y = data['Y'].copy()
+
+    categorical = list(x.select_dtypes(object).columns)
+    categ = list(x.dtypes == object)
+    x[categorical] = x[categorical].fillna('NaN')
+    for col in categorical:
+        x[col] = LabelEncoder().fit_transform(x[col].astype(str))
+
+    task = data['learning_job'].task
+    if task == 'Classification':
+        exclude = EXCLUDE_META_FEATURES_CLASSIFICATION
+    else:
+        exclude = EXCLUDE_META_FEATURES_REGRESSION
+
+    mf = metafeatures.calculate_all_metafeatures_with_labels(x.values, y, categ, data['learning_job'].name)
+    mf2 = metafeatures.calculate_all_metafeatures_encoded_labels(x.values, y,
+                                                                 [False] * x.shape[1], data['learning_job'].name,
+                                                                 dont_calculate=exclude)
+    for key in list(mf2.metafeature_values.keys()):
+        if mf2.metafeature_values[key].type_ != 'METAFEATURE':
+            del mf2.metafeature_values[key]
+
+    for key in list(mf.metafeature_values.keys()):
+        if mf.metafeature_values[key].type_ != 'METAFEATURE':
+            del mf.metafeature_values[key]
+
+    mfs = pd.DataFrame(np.zeros((1, len(all_metafeatures))), columns=all_metafeatures)
+    for col in mfs.columns:
+        if col in mf.metafeature_values:
+            mfs[col] = mf.metafeature_values[col].value
+        elif col in mf2.metafeature_values:
+            mfs[col] = mf2.metafeature_values[col].value
+    mfs = mfs.values[0]
+
+    x['target'] = LabelEncoder().fit_transform(y)
+    if use_correlation:
+        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=100))
+    else:
+        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=50))
+    ans = ans.fillna(0)
+    correlation_mean = ans.values.mean()
+    correlation_std = ans.values.std()
+
+    corr_mf = np.zeros(2)
+    if correlation_mean:
+        corr_mf[0] = correlation_mean
+    if correlation_std:
+        corr_mf[0] = correlation_std
+    mfs = np.concatenate((mfs, corr_mf))
+
+    assert len(mfs) == num_metafeatures
+    return mfs
+
 
 
 # TODO: check where we can move all the code from line 98 to 255 - some global init() function like MuZeroConfig?
@@ -309,7 +462,7 @@ class GridEnv:
 
 '''DeepLine observation class'''
 class Observation:
-    def __init__(self, level=1, mode='train', seed):
+    def __init__(self, level=1, mode='train', seed=0):
         # property related to the grid depth level init = 1 - verify?
         self.level = level
         #
@@ -798,7 +951,7 @@ class AutomlEnv(gym.Env):
 
     def __init__(self, seed):
         self.mode = 'train'
-        self.observation = Observation(level=3, mode=self.mode, seed)
+        self.observation = Observation(level=3, mode=self.mode, seed=self.seed)
         self.observation.reset_observation()
         arr = self.observation.get_state()[0]
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=arr.shape, dtype=np.float32)
@@ -1065,10 +1218,12 @@ class AutomlEnv(gym.Env):
             shape = (shape[0] - self.state_info['action_prims'] + self.state_info['action_prims'] * embedd_size,)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=shape, dtype=np.float32)  # Change!
         self.reset()
+
     #===OK
     def reset(self):
         self.observation.reset_observation()
         return self.get_state()
+
     #===OK
     def render(self, mode='human', close=False):
         if mode == 'human':
