@@ -72,33 +72,6 @@ LjRandom = Random(356)
 shRandom = Random(111)
 npRandom = RandomState(234)
 
-from .atml_util.metafeatures.meta_functions.entropy import Entropy
-from .atml_util.metafeatures.meta_functions.basic import Kurtosis
-from .atml_util.metafeatures.meta_functions.pearson_correlation import PearsonCorrelation
-from .atml_util.metafeatures.meta_functions.mutual_information import MutualInformation
-from .atml_util.metafeatures.meta_functions.basic import MissingValues
-from .atml_util.metafeatures.meta_functions.basic import Skew
-from .atml_util.metafeatures.meta_functions.basic import Mean as MeanF
-from .atml_util.metafeatures.meta_functions.spearman_correlation import SpearmanCorrelation
-from .atml_util.metafeatures.post_processing_functions.basic import Mean
-from .atml_util.metafeatures.post_processing_functions.basic import StandardDeviation
-from .atml_util.metafeatures.post_processing_functions.basic import NonAggregated
-from .atml_util.metafeatures.post_processing_functions.basic import Skew as Skew_post
-
-
-# Instantiate metafunctions and post-processing functions
-entropy = Entropy()
-kurtosis = Kurtosis()
-correlation = PearsonCorrelation()
-mutual_information = MutualInformation()
-scorrelation = SpearmanCorrelation()
-missing = MissingValues()
-skew = Skew()
-mean = MeanF()
-_mean = Mean()
-_sd = StandardDeviation()
-_nagg = NonAggregated()
-_skew = Skew_post()
 
 primtive_modules = {
     'data preprocess': data_preprocessing,
