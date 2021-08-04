@@ -241,7 +241,7 @@ class Game(AbstractGame):
     """
 
     def __init__(self, seed=None):
-        self.env = GridEnv()
+        self.env = AutomlEnv(seed)
 
     def step(self, action):
         """
@@ -267,8 +267,8 @@ class Game(AbstractGame):
         Returns:
             An array of integers, subset of the action space.
         """
-        return list(range(2))
-
+        self.env.get_cell_options()
+        return self.env.cell_options
     def reset(self):
         """
         Reset the game for a new game.
