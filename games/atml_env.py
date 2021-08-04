@@ -865,7 +865,7 @@ class AutomlEnv(gym.Env):
             state, self.state_info = self.observation.get_state()
 
             if self.embedd_size:
-                self.state_info['step_size'] = self.embedd_size + num_metafeatures + self.observation.level
+                self.state_info['step_size'] = self.embedd_size + self.observation.level
                 self.state_info['processed_actions_size'] = self.action_space.n * (self.state_info['step_size'])
             if self.observation.model:
                 state = self.observation.model.process_state_vec(state, self.state_info)
