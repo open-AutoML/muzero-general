@@ -7,8 +7,8 @@ import torch
 from .abstract_game import AbstractGame
 
 #=====DeepLine imports===============
-# TODO: check and change all deepLine imports
-# TODO: check whether we need more classes to be copied from deepLine code to the atml_util folder
+# TODO: check and change all deepLine imports - done
+# TODO: check whether we need more classes to be copied from deepLine code to the atml_util folder - done
 # TODO: check whether we need two renders (atml_util folder)
 """
 deepline-v0 Environment:
@@ -154,95 +154,6 @@ for val in primitives.values():
     all_primitives += val
 
 num_primitives = len(all_primitives) + 2
-
-EXCLUDE_META_FEATURES_CLASSIFICATION = {
-    'Landmark1NN',
-    'LandmarkDecisionNodeLearner',
-    'LandmarkRandomNodeLearner',
-    'LandmarkLDA',
-    'PCA'
-}
-all_metafeatures = ['ClassEntropy', 'SymbolsSum', 'SymbolsSTD', 'SymbolsMean', 'SymbolsMax', 'SymbolsMin', 'ClassProbabilitySTD', 'ClassProbabilityMean', 'ClassProbabilityMax', 'ClassProbabilityMin', 'InverseDatasetRatio', 'DatasetRatio', 'RatioNominalToNumerical', 'RatioNumericalToNominal', 'NumberOfCategoricalFeatures', 'NumberOfNumericFeatures', 'NumberOfMissingValues', 'NumberOfFeaturesWithMissingValues', 'NumberOfInstancesWithMissingValues', 'NumberOfFeatures', 'NumberOfClasses', 'NumberOfInstances', 'LogInverseDatasetRatio', 'LogDatasetRatio', 'PercentageOfMissingValues', 'PercentageOfFeaturesWithMissingValues', 'PercentageOfInstancesWithMissingValues', 'LogNumberOfFeatures', 'LogNumberOfInstances', 'PCASkewnessFirstPC', 'PCAKurtosisFirstPC', 'PCAFractionOfComponentsFor95PercentVariance', 'LandmarkRandomNodeLearner', 'LandmarkDecisionTree', 'LandmarkNaiveBayes', 'SkewnessSTD', 'SkewnessMean', 'SkewnessMax', 'SkewnessMin', 'KurtosisSTD', 'KurtosisMean', 'KurtosisMax', 'KurtosisMin']
-
-EXCLUDE_META_FEATURES_REGRESSION = {
-    'Landmark1NN',
-    'LandmarkDecisionNodeLearner',
-    'LandmarkDecisionTree',
-    'LandmarkLDA',
-    'LandmarkNaiveBayes',
-    'LandmarkRandomNodeLearner',
-    'NumberOfClasses',
-    'ClassOccurences',
-    'ClassProbabilityMin',
-    'ClassProbabilityMax',
-    'ClassProbabilityMean',
-    'ClassProbabilitySTD',
-    'ClassEntropy',
-    'LandmarkRandomNodeLearner',
-    'PCA',
-}
-
-num_metafeatures = len(all_metafeatures) + 2
-
-
-
-def generate_metafeatures(data, use_correlation=False):
-    if data['X'].empty or data['X'].shape[1] == 0:
-        return np.zeros(num_metafeatures)-99
-    x = data['X'].copy(deep=True)
-    y = data['Y'].copy()
-
-    categorical = list(x.select_dtypes(object).columns)
-    categ = list(x.dtypes == object)
-    x[categorical] = x[categorical].fillna('NaN')
-    for col in categorical:
-        x[col] = LabelEncoder().fit_transform(x[col].astype(str))
-
-    task = data['learning_job'].task
-    if task == 'Classification':
-        exclude = EXCLUDE_META_FEATURES_CLASSIFICATION
-    else:
-        exclude = EXCLUDE_META_FEATURES_REGRESSION
-
-    mf = metafeatures.calculate_all_metafeatures_with_labels(x.values, y, categ, data['learning_job'].name)
-    mf2 = metafeatures.calculate_all_metafeatures_encoded_labels(x.values, y,
-                                                                 [False] * x.shape[1], data['learning_job'].name,
-                                                                 dont_calculate=exclude)
-    for key in list(mf2.metafeature_values.keys()):
-        if mf2.metafeature_values[key].type_ != 'METAFEATURE':
-            del mf2.metafeature_values[key]
-
-    for key in list(mf.metafeature_values.keys()):
-        if mf.metafeature_values[key].type_ != 'METAFEATURE':
-            del mf.metafeature_values[key]
-
-    mfs = pd.DataFrame(np.zeros((1, len(all_metafeatures))), columns=all_metafeatures)
-    for col in mfs.columns:
-        if col in mf.metafeature_values:
-            mfs[col] = mf.metafeature_values[col].value
-        elif col in mf2.metafeature_values:
-            mfs[col] = mf2.metafeature_values[col].value
-    mfs = mfs.values[0]
-
-    x['target'] = LabelEncoder().fit_transform(y)
-    if use_correlation:
-        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=100))
-    else:
-        ans = x.drop("target", axis=1).apply(lambda i: i.corr(x['target'], min_periods=50))
-    ans = ans.fillna(0)
-    correlation_mean = ans.values.mean()
-    correlation_std = ans.values.std()
-
-    corr_mf = np.zeros(2)
-    if correlation_mean:
-        corr_mf[0] = correlation_mean
-    if correlation_std:
-        corr_mf[0] = correlation_std
-    mfs = np.concatenate((mfs, corr_mf))
-
-    assert len(mfs) == num_metafeatures
-    return mfs
-
 
 
 # TODO: check where we can move all the code from line 98 to 255 - some global init() function like MuZeroConfig?
