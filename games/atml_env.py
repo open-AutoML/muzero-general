@@ -421,17 +421,16 @@ class Observation:
                 if stp == 'BLANK':
                     stp_inputs = np.zeros(self.level) - 1
                     stp_prim = np.array([self.num_primitives - 2])
-                    stp_mf = np.zeros(num_metafeatures)
-
+                    
                 elif stp == 'FINISH':
                     stp_inputs = np.zeros(self.level) - 1
                     stp_prim = np.array([self.num_primitives - 1])
-                    stp_mf = np.zeros(num_metafeatures)
+                    
                 else:
                     stp_inputs = stp.vec_representation[0]
-                    stp_prim = stp.vec_representation[2]
-                    stp_mf = stp.vec_representation[1]
-                steps_matrix.append(self.model.get_actions_vec(stp_prim, stp_inputs, stp_mf).tolist())
+                    stp_prim = stp.vec_representation[1]
+
+                steps_matrix.append(self.model.get_actions_vec(stp_prim, stp_inputs).tolist())
 
             n_clusters = math.ceil(len(l)/n)
 
@@ -507,7 +506,6 @@ class Observation:
         self.hier_level = 1
         self.relations = []
         self.last_reward = 0
-        self.last_output_vec = generate_metafeatures(self.pipe_run.fit_outputs[0][0], use_correlation=True)
         self.num_estimators = 0
 
     def gentr_fn(self, alist):
@@ -586,7 +584,6 @@ class Observation:
                     continue
 
                 acceptance_dict = {}
-                data_vec = generate_metafeatures(data)
                 for primitive in family_primitives:
                     if not primitive in self.all_primitives:
                         continue
@@ -596,7 +593,7 @@ class Observation:
                         accepts = primitive().can_accept(data)
                         acceptance_dict[primitive().accept_type] = accepts
                     if accepts and primitive().is_needed(data):
-                        step = Step(len(self.pipe_run.steps) + 1, inputs, primitive(random_state=self.random_state), data_vec)
+                        step = Step(len(self.pipe_run.steps) + 1, inputs, primitive(random_state=self.random_state))
                         ind = self.all_primitives.index(primitive)
                         step.to_vector(self.num_primitives, ind, self.level)
                         self.cell_options.append(step)
@@ -641,7 +638,7 @@ class Observation:
                 options_family[i] = 0
             else:
                 stp_inputs = stp.vec_representation[0]
-                stp_prim = stp.vec_representation[2]
+                stp_prim = stp.vec_representation[1]
                 options_family[i] = families[stp.primitive.type]
             i += 1
             steps_inputs = np.concatenate((steps_inputs, stp_inputs))
