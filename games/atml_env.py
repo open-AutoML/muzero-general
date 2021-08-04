@@ -10,6 +10,8 @@ from .abstract_game import AbstractGame
 # TODO: check and change all deepLine imports - done
 # TODO: check whether we need more classes to be copied from deepLine code to the atml_util folder - done
 # TODO: check whether we need two renders (atml_util folder)
+# TODO: to check why set_env_params not in init() - not in init because yuval implementation is meant to be a gym env (and saved as such) whose parameters are set in init.
+# These parameters change by user prefences which is impossible to do if they are part of the saved enviroment.
 """
 deepline-v0 Environment:
     1. cursor moves from left to right
@@ -136,6 +138,17 @@ class MuZeroConfig:
         # More information is available here: https://github.com/werner-duvaud/muzero-general/wiki/Hyperparameter-Optimization
 
         self.seed = 0  # Seed for numpy, torch and the game
+        self.primitives_list = all_primitives
+        self.lj_list = range(45)
+        self.cv_reward = False
+        self.print_scores = False
+        self.level = 3
+        self.reset_regressor = True
+        self.split_rate = 0.8
+        self.baselines_rewards = False
+        self.heirarc_step = True
+        self.embedd_size = 15
+        self.log_pipelines = True
         self.max_num_gpus = None  # Fix the maximum number of GPUs to use. It's usually faster to use a single GPU (set it to 1) if it has enough memory. None will use every GPUs available
 
         ### Game
@@ -240,8 +253,12 @@ class Game(AbstractGame):
     Game wrapper.
     """
 
-    def __init__(self, seed=None):
-        self.env = AutomlEnv(seed)
+    def __init__(self, seed=None, primitives_list=None, lj_list=None, cv_reward=False, print_scores=False, level=3,
+                       reset_regressor=True, split_rate=0.8, baselines_rewards=False,
+                       heirarc_step=True, embedd_size=None, log_pipelines=False):
+        self.env = AutomlEnv(seed, primitives_list, lj_list, cv_reward, print_scores, level,
+                       reset_regressor, split_rate, baselines_rewards,
+                       heirarc_step, embedd_size, log_pipelines)
 
     def step(self, action):
         """
@@ -830,7 +847,9 @@ class Observation:
 class AutomlEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, seed):
+    def __init__(self, seed, primitives_list=None, lj_list=None, cv_reward=False, print_scores=False, level=3,
+                       reset_regressor=True, split_rate=0.8, baselines_rewards=False,
+                       heirarc_step=True, embedd_size=None, log_pipelines=False):
         self.mode = 'train'
         self.observation = Observation(level=3, mode=self.mode, seed=self.seed)
         self.observation.reset_observation()
@@ -848,6 +867,42 @@ class AutomlEnv(gym.Env):
         # self.model = None
         self.embedd_size = None
         self.seed = seed
+                self.heirarc_step = heirarc_step
+        self.observation = Observation(level=level, mode=self.mode)
+        self.observation.split_rate = split_rate
+        self.observation.random_state = self.seed
+        self.observation.split_rate = split_rate
+        self.observation.reset_observation(primitives_list, lj_list)
+        self.observation.cv_reward = cv_reward
+        self.observation.baselines_rewards = baselines_rewards
+        self.observation.log_pipelines = log_pipelines
+        if baselines_rewards:
+            self.observation.compute_baselines()
+        self.observation.print_scores = print_scores
+        if reset_regressor:
+            self.observation.meta_regressor_data = []
+        if not heirarc_step:
+            self.actions_dict, self.steps_dict = self.get_actions_dict()
+            self.action_space = spaces.Discrete(len(self.actions_dict))
+            for step in self.observation.cell_options:
+                if step == -1:
+                    continue
+                if step == 'BLANK' or step == 'FINISH':
+                    self.steps_dict[step] = step
+                else:
+                    ipt = str([self.observation.input_to_cell_dict[item[0]].astype(int).tolist() for item in
+                               step.input_indices])
+                    step_key = str([ipt, step.primitive.name])
+                    if len(self.steps_dict) > 0 and not step_key in self.steps_dict:
+                        raise Exception('step not in dict')
+                    self.steps_dict[step_key] = step
+        arr = self.get_state()
+        shape = arr.shape
+        if embedd_size:
+            self.embedd_size = embedd_size
+            shape = (shape[0] - self.state_info['action_prims'] + self.state_info['action_prims'] * embedd_size,)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=shape, dtype=np.float32)  # Change!
+        self.reset()
 
     # TODO: same as get_observation() - check if we want to leave the same name
     def get_state(self):
@@ -1057,48 +1112,6 @@ class AutomlEnv(gym.Env):
             self.observation.register_state = True
             return state, self.observation.last_reward, done, {'episode': None, 'register': self.observation.register_state,
                                                                'hier_level': hlevel}
-
-    # TODO: to check why not in init()
-    def set_env_params(self, primitives_list=None, lj_list=None, cv_reward=False, print_scores=False, level=3,
-                       reset_regressor=True, split_rate=0.8, baselines_rewards=False,
-                       heirarc_step=True, embedd_size=None, log_pipelines=False):
-
-        self.heirarc_step = heirarc_step
-        self.observation = Observation(level=level, mode=self.mode)
-        self.observation.split_rate = split_rate
-        self.observation.random_state = self.seed
-        self.observation.split_rate = split_rate
-        self.observation.reset_observation(primitives_list, lj_list)
-        self.observation.cv_reward = cv_reward
-        self.observation.baselines_rewards = baselines_rewards
-        self.observation.log_pipelines = log_pipelines
-        if baselines_rewards:
-            self.observation.compute_baselines()
-        self.observation.print_scores = print_scores
-        if reset_regressor:
-            self.observation.meta_regressor_data = []
-        if not heirarc_step:
-            self.actions_dict, self.steps_dict = self.get_actions_dict()
-            self.action_space = spaces.Discrete(len(self.actions_dict))
-            for step in self.observation.cell_options:
-                if step == -1:
-                    continue
-                if step == 'BLANK' or step == 'FINISH':
-                    self.steps_dict[step] = step
-                else:
-                    ipt = str([self.observation.input_to_cell_dict[item[0]].astype(int).tolist() for item in
-                               step.input_indices])
-                    step_key = str([ipt, step.primitive.name])
-                    if len(self.steps_dict) > 0 and not step_key in self.steps_dict:
-                        raise Exception('step not in dict')
-                    self.steps_dict[step_key] = step
-        arr = self.get_state()
-        shape = arr.shape
-        if embedd_size:
-            self.embedd_size = embedd_size
-            shape = (shape[0] - self.state_info['action_prims'] + self.state_info['action_prims'] * embedd_size,)
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=shape, dtype=np.float32)  # Change!
-        self.reset()
 
     #===OK
     def reset(self):
