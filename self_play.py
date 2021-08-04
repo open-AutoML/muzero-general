@@ -16,7 +16,9 @@ class SelfPlay:
 
     def __init__(self, initial_checkpoint, Game, config, seed):
         self.config = config
-        self.game = Game(seed)
+        self.game = Game(seed, config.primitives_list, config.lj_list, config.cv_reward, config.print_scores, config.level,
+                       config.reset_regressor, config.split_rate, config.baselines_rewards,
+                       config.heirarc_step, config.embedd_size, config.log_pipelines)
 
         # Fix random generator seed
         numpy.random.seed(seed)
