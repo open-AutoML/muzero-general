@@ -1000,7 +1000,38 @@ class AutomlEnv(gym.Env):
                     self.steps_dict[step_key] = step
             return state, self.observation.last_reward, done, {'episode': None, 'register': self.observation.register_state,
                                                                    'hier_level': self.observation.hier_level}
+    def get_actions_dict(self):
+        all_inputs = [[[-1, -1]]]
+        cells_lists = []
+        for i in range(len(self.observation.grid)):
+            curr_list = []
+            for j in range(len(self.observation.grid[0])):
+                if [i, j] in self.observation.skip_cells:
+                    continue
+                else:
+                    curr_list.append([i, j])
+            if i > 0:
+                l = cells_lists[-1:]
+                l.append(curr_list[:-1] + [[-1, -1]])
+                combs = list(itertools.product(*l))
+                combs = [list(elem) for elem in combs]
+                all_inputs += combs
+            cells_lists.append(curr_list)
+            add_ipts = [[i] for i in curr_list[:-1]]
+            all_inputs += add_ipts
 
+        cells_lists[-1].pop(-1)
+        final_comb = [list(elem) for elem in list(itertools.product(*cells_lists))]
+        all_inputs += final_comb
+        inputs_keys = [str(i) for i in all_inputs]
+        prim_keys = [prim().name for prim in self.observation.all_primitives]
+        inputs_keys.append(prim_keys)
+        keys_lst = []
+        keys_lst.append(inputs_keys)
+        keys_lst.append(prim_keys)
+        lst = [str(i) for i in [list(elem) for elem in list(itertools.product(*keys_lst))]] + ['BLANK'] + ['FINISH']
+        return {v: k for v, k in enumerate(lst)}, dict.fromkeys(lst)
+    
     #===Internal
     def hierarchical_step(self, action):
         done = False
