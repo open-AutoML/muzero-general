@@ -1,2 +1,2 @@
 pip install -r requirements.txt
-python muzero.py cartpole 0
+python muzero.py cartpole
